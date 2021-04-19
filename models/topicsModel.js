@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const {Schema, model}= mongoose;
 
 const topicsSchema = new Schema({
-	
-	text: {type:String},
+
+	name: {type:String},
 
 })
 

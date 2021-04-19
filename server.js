@@ -41,7 +41,7 @@ db.on('error', (error)=> console.log(error.message));
 db.on('disconnected', ()=> console.log('Mongoose disconnected...'));
 
 
-/
+//
 app.use(session({
 	secret: 'JustKiding',
 	resave: false,
@@ -60,6 +60,7 @@ const isAuthenticated = (req, res, next) => {
 // controllers
 app.use('/chat', isAuthenticated,  require('./controllers/chatController'))
 app.use('/topics', require('./controllers/topicsController'))
+app.use('/users', require('./controllers/usersController'))
 
 
 app.listen(PORT, ()=>{

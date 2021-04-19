@@ -1,15 +1,17 @@
 const express = require('express');
-const app = express.Router();
+const chat = express.Router();
 const chatModel = require('../models/chatModel');
+const usersModel = require('../models/usersModel');
+const topicsModel = require('../models/topicsModel');
 //socket.io integration
 const http = require('http');
-const server = http.createServer(app);
+const server = http.createServer(chat);
 const io = require('socket.io')(server);
 
 
 
 //show
-app.get('/', (req, res)=>{
+chat.get('/', (req, res)=>{
 	console.log('index route')
 	chatModel.find({}, (error, foundChats)=>{
 		if (error){
@@ -28,7 +30,7 @@ io.on('connection', (socket) => {
 });
 
 //post
-app.post('/', (req, res)=>{
+chat.post('/', (req, res)=>{
 
 	chatModel.create(req.body, (error, createChat)=>{
 		if (error){
@@ -42,4 +44,4 @@ app.post('/', (req, res)=>{
 });
 
 
-module.exports = app;
+module.exports = chat;
