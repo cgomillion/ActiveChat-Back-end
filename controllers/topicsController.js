@@ -15,9 +15,9 @@ topics.get('/', (req, res)=>{
 		}
 		else{
 
-			res.status(200).json(foundUser.favHolidays)
+			res.status(200).json(foundUser)
 		}
-	}).populate('favHolidays')
+	})
 
 });
 
@@ -38,7 +38,7 @@ topics.post('/', (req, res)=>{
 				}
 				else{
 					foundUser.save()
-					res.status(201).json(createHoliday)
+					res.status(201).json(createTopics)
 				}
 			})
 		}

@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const PORT = 3003;
 const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo')
 const cors = require('cors')
 const session = require('express-session');
 
@@ -26,7 +27,9 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 
-
+app.use(session({
+  store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/chatroomDB' })
+}));
 // SETUP mongoose
 mongoose.connect('mongodb://localhost:27017/chatroomDB',{
 	useNewUrlParser:true,
