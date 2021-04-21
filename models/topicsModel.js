@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const {Schema, model}= mongoose;
 
 const topicsSchema = new Schema({
@@ -8,6 +7,6 @@ const topicsSchema = new Schema({
 
 })
 
-const Topics = model('Bounties',topicsSchema)
+const Topics = model('Topics',topicsSchema)
 
 module.exports = Topics

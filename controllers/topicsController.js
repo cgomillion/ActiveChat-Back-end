@@ -17,7 +17,7 @@ topics.get('/', (req, res)=>{
 
 			res.status(200).json(foundUser)
 		}
-	})
+	}).populate('favTopics')
 
 });
 
@@ -37,6 +37,7 @@ topics.post('/', (req, res)=>{
 					res.status(400).json({ error: error.message })
 				}
 				else{
+                    foundUser.favTopics.push(createTopics)
 					foundUser.save()
 					res.status(201).json(createTopics)
 				}

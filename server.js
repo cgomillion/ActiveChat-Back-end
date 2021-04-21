@@ -1,18 +1,16 @@
 //DEPENDENCIES
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const PORT = 3003;
 const mongoose = require('mongoose');
-const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
 
-// MIDDLEWARE
-// this will tell the server to parse the JSON data, and create the req.body object.
-app.use(express.json());
 
 // Setup Cors middleware
-const whitelist = ['http://localhost:3000']
+const whitelist = ['http://localhost:3000', 'http://localhost:3003']
 const corsOptions = {
 	origin: (origin, callback) => {
 		if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -26,43 +24,48 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 
-
+// Creating req.session
 app.use(session({
-  store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/chatroomDB' })
-}));
+	secret: 'secret',
+	resave: false,
+	saveUninitialized: false,
+  	store: new MongoDBStore({ 
+		uri: process.env.MONGODBURI, 
+		collection: 'mySessions'
+	})
+}))
+
 // SETUP mongoose
-mongoose.connect('mongodb://localhost:27017/chatroomDB',{
-	useNewUrlParser:true,
+const db = mongoose.connection;
+mongoose.connect('mongodb://127.0.0.1/chatroomDB',{
+	useNewUrlParser: true,
 	useUnifiedTopology: true,
-	useFindAndModify: false
+	useFindAndModify: false,
+	useCreateIndex: true
 });
 
 // set up listeners to monitor your DB connection
-const db = mongoose.connection;
-db.once('open', ()=> console.log('DB connected...'));
+
+db.on('open', ()=> console.log('DB connected...'));
 db.on('error', (error)=> console.log(error.message));
 db.on('disconnected', ()=> console.log('Mongoose disconnected...'));
 
-
-//
-app.use(session({
-	secret: 'JustKiding',
-	resave: false,
-	saveUninitialized: false
-}))
 
 const isAuthenticated = (req, res, next) => {
     if (req.session.currentUser) {
         return next()
     } else {
-        res.status(403).json({msg:"loging require"})
+        res.status(403).json({msg:"login required"})
     }
 }
 
+// MIDDLEWARE
+// this will tell the server to parse the JSON data, and create the req.body object.
+app.use(express.json());
 
 // controllers
 app.use('/chat', isAuthenticated,  require('./controllers/chatController'))
-app.use('/topics', require('./controllers/topicsController'))
+app.use('/topics', isAuthenticated, require('./controllers/topicsController'))
 app.use('/users', require('./controllers/usersController'))
 
 

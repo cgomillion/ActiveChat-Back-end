@@ -10,7 +10,7 @@ users.post('/signup', (req, res) => {
     // hashing and salting the password
     req.body.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10))
 
-    UsersModel.create(req.body, (error, createdUser) => {
+    usersModel.create(req.body, (error, createdUser) => {
         if (error) {
             res.status(400).json({ error: error.message })
         }
