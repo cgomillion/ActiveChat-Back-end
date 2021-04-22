@@ -1,17 +1,21 @@
-//DEPENDENCIES
-const express = require('express');
-const app = express();
-const PORT = 3003;
-const mongoose = require('mongoose');
-const MongoStore = require('connect-mongo')
-const cors = require('cors')
+const app = require('express')();
 const session = require('express-session');
+const http = require('http').createServer(app);
+const PORT = 3000;
+const io = require('socket.io')(http);
 
-// MIDDLEWARE
-// this will tell the server to parse the JSON data, and create the req.body object.
-app.use(express.json());
+const STATIC_CHANNELS = [{
+    name: 'Global chat',
+    participants: 0,
+    id: 1,
+    sockets: []
+}, {
+    name: 'Funny',
+    participants: 0,
+    id: 2,
+    sockets: []
+}];
 
-// Setup Cors middleware
 const whitelist = ['http://localhost:3000']
 const corsOptions = {
 	origin: (origin, callback) => {
@@ -24,48 +28,79 @@ const corsOptions = {
 	credentials:true
 }
 
-app.use(cors(corsOptions))
-
-
-app.use(session({
-  store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/chatroomDB' })
-}));
-// SETUP mongoose
-mongoose.connect('mongodb://localhost:27017/chatroomDB',{
-	useNewUrlParser:true,
-	useUnifiedTopology: true,
-	useFindAndModify: false
-});
-
-// set up listeners to monitor your DB connection
-const db = mongoose.connection;
-db.once('open', ()=> console.log('DB connected...'));
-db.on('error', (error)=> console.log(error.message));
-db.on('disconnected', ()=> console.log('Mongoose disconnected...'));
-
-
-//
 app.use(session({
 	secret: 'JustKiding',
 	resave: false,
 	saveUninitialized: false
 }))
 
-const isAuthenticated = (req, res, next) => {
-    if (req.session.currentUser) {
-        return next()
-    } else {
-        res.status(403).json({msg:"loging require"})
-    }
-}
-
-
-// controllers
-app.use('/chat', isAuthenticated,  require('./controllers/chatController'))
-app.use('/topics', require('./controllers/topicsController'))
-app.use('/users', require('./controllers/usersController'))
-
-
-app.listen(PORT, ()=>{
-	console.log(`Server is listening on port ${PORT}`);
+app.use(cors(corsOptions))
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
 })
+
+
+
+http.listen(PORT, () => {
+    console.log(`listening on *:${PORT}`);
+});
+
+io.on('connection', (socket) => { /
+    console.log('new client connected');
+    socket.emit('connection', null);
+    socket.on('channel-join', id => {
+        console.log('channel join', id);
+        STATIC_CHANNELS.forEach(c => {
+            if (c.id === id) {
+                if (c.sockets.indexOf(socket.id) == (-1)) {
+                    c.sockets.push(socket.id);
+                    c.participants++;
+                    io.emit('channel', c);
+                }
+            } else {
+                let index = c.sockets.indexOf(socket.id);
+                if (index != (-1)) {
+                    c.sockets.splice(index, 1);
+                    c.participants--;
+                    io.emit('channel', c);
+                }
+            }
+        });
+
+        return id;
+    });
+    socket.on('send-message', message => {
+        io.emit('message', message);
+    });
+
+    socket.on('disconnect', () => {
+        STATIC_CHANNELS.forEach(c => {
+            let index = c.sockets.indexOf(socket.id);
+            if (index != (-1)) {
+                c.sockets.splice(index, 1);
+                c.participants--;
+                io.emit('channel', c);
+            }
+        });
+    });
+
+});
+
+
+
+/**
+ * @description This methos retirves the static channels
+ */
+app.get('/getChannels', (req, res) => {
+    res.json({
+        channels: STATIC_CHANNELS
+    })
+});
+
+
+app.get('/getChannels', (req, res) => {
+    res.json({
+        channels: STATIC_CHANNELS
+    })
+});
